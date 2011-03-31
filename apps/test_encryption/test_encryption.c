@@ -201,7 +201,7 @@ void print128BitHex(uint8 XDATA * buf)
 void main()
 {
     char mode = 0;
-    uint8 XDATA buf[16], out[16];
+    uint8 XDATA buf[16];
 
     systemInit();
     usbInit();
@@ -249,16 +249,18 @@ void main()
         }
         if (!read128BitHex(buf)) { continue; }
 
+        waitForTx();
+        CRLF();
         if (mode == 'e')
         {
-            aesEncrypt(buf, out, 1);
+            aesEncrypt(buf, buf, 1);
             printf("Ciphertext = ");
         }
         else
         {
-            aesDecrypt(buf, out, 1);
+            aesDecrypt(buf, buf, 1);
             printf("Plaintext = ");
         }
-        print128BitHex(out);
+        print128BitHex(buf);
     }
 }
