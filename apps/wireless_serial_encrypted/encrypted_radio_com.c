@@ -3,9 +3,6 @@
 #include <random.h>
 #include "encrypted_radio_com.h"
 
-static uint8 XDATA plainRxData[AES_BLOCK_SIZE];
-static uint8 XDATA plainTxData[AES_BLOCK_SIZE];
-
 static uint8 DATA txBytesLoaded = 0;
 static uint8 DATA rxBytesLeft = 0;
 
@@ -29,12 +26,6 @@ void radioComInit()
     radioLinkInit();
 }
 
-static uint8 unpaddedRxDataLength()
-{
-    // The last byte contains the number of padding bytes.
-    return AES_BLOCK_SIZE - plainRxData[AES_BLOCK_SIZE - 1];
-}
-
 // NOTE: This function only returns the number of bytes available in the CURRENT PACKET.
 // It doesn't look at all the packets received, and it doesn't count the data that is
 // queued on the other Wixel.  Therefore, it is never recommended to write some kind of
@@ -54,9 +45,9 @@ uint8 radioComRxAvailable(void)
         return 0;
     }
 
-    aesDecrypt(rxPointer + 1, plainRxData, 1);
-    rxBytesLeft = unpaddedRxDataLength();  // Read the data length.
-    rxPointer = plainRxData;              // Make rxPointer point to the data.
+    aesDecrypt(rxPointer + 1, rxPointer + 1, 1);
+    rxBytesLeft = AES_BLOCK_SIZE - rxPointer[1 + AES_BLOCK_SIZE - 1]; // Compute the data length. The last byte contains the number of padding bytes.
+    rxPointer += 1;              // Make rxPointer point to the data.
 
     // Assumption: radioLink doesn't ever return zero-length packets,
     // so rxBytesLeft is non-zero now and we don't have to worry about
@@ -81,27 +72,25 @@ uint8 radioComRxReceiveByte(void)
     return tmp;
 }
 
+// pad data with random bytes, except for the last byte which is equal to the number of padding bytes.
+// (There is always at least 1 padding byte, so the max data length is 15.)
 static void padTxData(void)
 {
-    // pad data with random bytes, except for the last byte which is equal to the number of padding bytes.
-    // (There is always at least 1 padding byte, so the max data length is 15.)
-
-    uint8 i;
-
     // random bytes
-    for (i = txBytesLoaded; i < (AES_BLOCK_SIZE - 1); i++)
+    while (txPointer < (packetPointer + 1 + AES_BLOCK_SIZE - 1))
     {
-        plainTxData[i] = randomNumber();
+        txPointer++;
+        *txPointer = randomNumber();
     }
 
-    // last byte
-    plainTxData[AES_BLOCK_SIZE - 1] = AES_BLOCK_SIZE - txBytesLoaded;
+    // last byte: padding length
+    packetPointer[1 + AES_BLOCK_SIZE - 1] = AES_BLOCK_SIZE - txBytesLoaded;
 }
 
 static void radioComEncryptAndSendPacketNow(void)
 {
     padTxData();
-    aesEncrypt(plainTxData, packetPointer + 1, 1);
+    aesEncrypt(packetPointer + 1, packetPointer + 1, 1);
     *packetPointer = AES_BLOCK_SIZE;
     radioLinkTxSendPacket();
     txBytesLoaded = 0;
@@ -129,12 +118,11 @@ void radioComTxSendByte(uint8 byte)
     // Assumption: The user called radioComTxAvailable recently and it returned a non-zero value.
     if (txBytesLoaded == 0)
     {
-        txPointer = plainTxData;
-        packetPointer = radioLinkTxCurrentPacket();
+        txPointer = packetPointer = radioLinkTxCurrentPacket();
     }
 
-    *txPointer = byte;
     txPointer++;
+    *txPointer = byte;
     txBytesLoaded++;
 
     if (txBytesLoaded == (AES_BLOCK_SIZE - 1)) // reserve 1 byte for padding
