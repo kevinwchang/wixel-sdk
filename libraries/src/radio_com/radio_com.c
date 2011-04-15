@@ -29,6 +29,11 @@ static BIT sendSignalsSoon = 0; // 1 iff we should transmit control signals soon
 // the importance of calling radioComTxService often (which can be good).
 #define TX_QUEUE_THRESHOLD  1
 
+static void doNothing(uint8 XDATA * packet);
+
+PacketModifierFunction * radioComRxPacketModifier = doNothing;
+PacketModifierFunction * radioComTxPacketModifier = doNothing;
+
 void radioComInit()
 {
     radioLinkInit();
@@ -66,6 +71,8 @@ static void receiveMorePackets(void)
         case PAYLOAD_TYPE_DATA:
             // We received some data.  Populate rxPointer and rxBytesLeft.
             // The data can be retreived with radioComRxAvailable and racioComRxReceiveByte().
+
+            radioComRxPacketModifier(packet);
 
             // Assumption: radioLink doesn't ever return zero-length packets,
             // so rxBytesLeft is non-zero now and we don't have to worry about
@@ -134,6 +141,9 @@ uint8 radioComRxControlSignals(void)
 static void radioComSendDataNow()
 {
     *packetPointer = txBytesLoaded;
+
+    radioComTxPacketModifier(packetPointer);
+
     radioLinkTxSendPacket(PAYLOAD_TYPE_DATA);
     txBytesLoaded = 0;
 }
@@ -240,4 +250,10 @@ void radioComTxControlSignals(uint8 controlSignals)
         sendSignalsSoon = 1;
         radioComTxService();
     }
+}
+
+static void doNothing(uint8 XDATA * packet)
+{
+    // Do nothing. Reference packet to avoid unreferenced function argument warning.
+    packet;
 }
