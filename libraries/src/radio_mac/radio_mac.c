@@ -38,7 +38,6 @@
 #define STX     3
 #define SIDLE   4
 
-void radioPhyInit();
 static void radioMacEvent(uint8 event);
 
 // Bits for sending commands to the MAC in an interrupt safe way.
@@ -47,8 +46,12 @@ static volatile BIT strobe = 0;
 // Error reporting
 volatile BIT radioRxOverflowOccurred = 0;
 volatile BIT radioTxUnderflowOccurred = 0;
-volatile uint8 DATA radioBadMarcState = 0xFF;
 
+// Radio MAC states
+#define RADIO_MAC_STATE_OFF      0
+#define RADIO_MAC_STATE_IDLE     1
+#define RADIO_MAC_STATE_RX       2
+#define RADIO_MAC_STATE_TX       3
 volatile uint8 DATA radioMacState = RADIO_MAC_STATE_OFF;
 
 ISR(RF, 1)
@@ -159,12 +162,6 @@ void radioMacEvent(uint8 event)
      * happen later after we disarm the DMA channel. */
     if (MARCSTATE != 0x12 && MARCSTATE != 0x01 && MARCSTATE != 0x00 && MARCSTATE != 0x15)
     {
-        // Report the bad state to the main loop for debugging purposes.
-        if (radioBadMarcState == 0xFF && MARCSTATE != 0x0D)
-        {
-            radioBadMarcState = MARCSTATE;
-        }
-
         // Fix the bad state by telling the radio to go to the SFSTXON state.
         RFST = SFSTXON;
     }
@@ -226,13 +223,11 @@ void radioMacInit()
     dmaConfig.radio.DC6 = 19; // WORDSIZE = 0, TMODE = 0, TRIG = 19
 }
 
-// Called by the user from radioMacEventHandler to tell the Mac that it should
-// start trying to receive a packet.  The timeout is in units of .922 ms.
 void radioMacRx(uint8 XDATA * packet, uint8 timeout)
 {
     if (timeout)
     {
-        MCSM2 = 0x00;   // RX_TIME = 1.  Helps determine the units of the RX timeout period.
+        MCSM2 = 0x00;   // RX_TIME = 0.  Helps determine the units of the RX timeout period.
         WORCTRL = 0;    // WOR_RES = 0.  Helps determine the units of the RX timeout period.
         WOREVT1 = timeout;
         WOREVT0 = 0;

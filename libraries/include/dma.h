@@ -1,7 +1,8 @@
 /*! \file dma.h
- * This file provides basic functions and variables for the CC2511's
- * DMA controller. The implementation of these things is in
- * <code>dma.lib</code>.
+ * The <code>dma.lib</code> library provides basic functions and variables for
+ * the CC2511's DMA controller.
+ * DMA provides a fast way to copy blocks of data from one memory region or
+ * peripheral to another.
  */
 
 #ifndef _DMA_H_
@@ -13,7 +14,7 @@
  * to ::dmaConfig.
  *
  * This function is called by systemInit(). */
-void dmaInit();
+void dmaInit(void);
 
 /*! This is the number of the DMA channel we have chosen to use for
  * transmitting and receiving radio packets. */
@@ -41,7 +42,7 @@ typedef struct DMA14_CONFIG
 /*! This structure in XDATA holds the configuration options
  for DMA channels 1-4.  We have to do it this way because the
  CC2511's DMA controller expects the configurations of those
- channels to be next to eachother in memory.  The configuration
+ channels to be next to each other in memory.  The configuration
  of channel 0 can be anywhere.  You must call dmaInit()
  (or systemInit()) for this struct to work. */
 extern DMA14_CONFIG XDATA dmaConfig;
