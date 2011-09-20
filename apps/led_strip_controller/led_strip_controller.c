@@ -60,6 +60,11 @@ void ledStripInit()
 
 }
 
+void ledStripStartTransfer()
+{
+    DMAARM |= (1 << DMA_CHANNEL_LED);
+}
+
 void ledStripService()
 {
     static uint32 lastTime = 0;
@@ -67,9 +72,12 @@ void ledStripService()
     if (getMs() - lastTime >= 30)
     {
         lastTime = getMs();
-        DMAARM |= (1 << DMA_CHANNEL_LED);
+
+        ledStripStartTransfer();
     }
 }
+
+uint8 volatile XDATA x;
 
 void main()
 {
@@ -88,13 +96,14 @@ void main()
 
 
         // Spam XDATA with reads and writes to see if there will be a problem.
-        __asm movx  @dptr,a __endasm;
-        __asm movx  @dptr,a __endasm;
-        __asm movx  @dptr,a __endasm;
-        __asm movx  @dptr,a __endasm;
-        __asm movx  a,@dptr __endasm;
-        __asm movx  a,@dptr __endasm;
-        __asm movx  a,@dptr __endasm;
-        __asm movx  a,@dptr __endasm;
+        __asm mov dptr,#_x __endasm;
+        __asm movx @dptr,a __endasm;
+        __asm movx @dptr,a __endasm;
+        __asm movx @dptr,a __endasm;
+        __asm movx @dptr,a __endasm;
+        __asm movx a,@dptr __endasm;
+        __asm movx a,@dptr __endasm;
+        __asm movx a,@dptr __endasm;
+        __asm movx a,@dptr __endasm;
     }
 }
