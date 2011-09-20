@@ -5,8 +5,8 @@
 #define LED_DMA (dmaConfig._2)
 #define DMA_CHANNEL_LED 2
 
-#define H 15
-#define L 8
+#define H 8
+#define L 15
 
 volatile uint8 XDATA bitBuffer[96+1] =
 {
@@ -26,7 +26,7 @@ volatile uint8 XDATA bitBuffer[96+1] =
         H, L, L, L, L, L, L, L,
         H, L, L, L, L, L, L, L,
 
-        0,  // Reset
+        255,  // Reset
 };
 
 // Experimentally, we found that duty cycles of 10 or lower are bad.
@@ -43,7 +43,7 @@ void ledStripInit()
     T3CC0 = 23;       // Set the period
     T3CC1 = 0;       // Set the duty cycle.
     T3CCTL0 = 0b00000100;  // Enable the channel 0 compare, which triggers the DMA at the end of every period.
-    T3CCTL1 = 0b00100100;  // T3CH1: Timer disabled, clear output on compare up, set on 0.
+    T3CCTL1 = 0b00011100;  // T3CH1: Timer disabled, clear output on compare up, set on 0.
     T3CTL = 0b00010010;  // Start the timer with Prescaler 1:1, modulo mode (counts from 0 to T3CC0).
 
     LED_DMA.DC6 = 19; // WORDSIZE = 0, TMODE = 0, TRIG = 19
@@ -62,6 +62,7 @@ void ledStripInit()
 
 void ledStripStartTransfer()
 {
+
     DMAARM |= (1 << DMA_CHANNEL_LED);
 }
 
