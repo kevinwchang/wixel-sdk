@@ -1,0 +1,1 @@
+APP_LIBS := dma.lib usb.lib usb_cdc_acm.lib wixel.lib
