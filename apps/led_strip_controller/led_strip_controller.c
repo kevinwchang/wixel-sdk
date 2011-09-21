@@ -1,6 +1,7 @@
 #include <wixel.h>
 #include <usb.h>
 #include <usb_com.h>
+#include <stdio.h>
 
 #define LED_DMA (dmaConfig._2)
 #define DMA_CHANNEL_LED 2
@@ -15,23 +16,25 @@
 //#define H 10
 //#define L 25
 
-volatile uint8 XDATA bitBuffer[96+1] =
+#define LED_DATA_BITS 96
+
+volatile uint8 XDATA bitBuffer[LED_DATA_BITS+1] =
 {
-        H, H, H, H, H, H, H, H,  // Red 1
-        L, L, L, L, L, L, L, L,  // Green 1
-        H, H, H, H, L, L, L, L,  // Blue
+        H, H, H, H, H, H, H, H,
+        H, H, H, H, H, H, H, H,
+        H, H, H, H, H, H, H, H,
 
-        L, H, L, H, L, H, L, H,
-        H, L, H, L, H, L, H, L,
-        H, H, L, L, H, H, L, L,
+        H, H, H, H, H, H, H, H,
+        H, H, H, H, H, H, H, H,
+        H, H, H, H, H, H, H, H,
 
-        H, H, H, H, L, L, L, L,
-        H, L, H, L, H, L, H, L,
-        L, L, L, L, L, H, L, L,
+        H, H, H, H, H, H, H, H,
+        H, H, H, H, H, H, H, H,
+        H, H, H, H, H, H, H, H,
 
-        H, L, L, L, L, L, L, L,
-        H, L, L, L, L, L, L, L,
-        H, L, L, L, L, L, L, L,
+        H, H, H, H, H, H, H, H,
+        H, H, H, H, H, H, H, H,
+        H, H, H, H, H, H, H, H,
 
         255,  // Reset
 };
@@ -89,6 +92,41 @@ void ledStripService()
 
 uint8 volatile XDATA x;
 
+void putchar(char x)
+{
+    usbComTxSendByte(x);
+}
+
+void updateBitBuffer()
+{
+    static uint8 n = 0;
+
+    if (usbComRxAvailable() && usbComTxAvailable() >= 32)
+    {
+        uint8 i;
+        switch(usbComRxReceiveByte())
+        {
+        case 'a':
+            n++;
+            if (n >= LED_DATA_BITS){ n = 0; }
+            break;
+        case 'd':
+            n--;
+            if (n == 255){ n = LED_DATA_BITS-1; }
+            break;
+        default:
+            return;
+        }
+        printf("n=%d\r\n", n);
+
+        for (i = 0; i < LED_DATA_BITS; i++)
+        {
+            bitBuffer[i] = L;
+        }
+        bitBuffer[n] = H;
+    }
+}
+
 void main()
 {
     systemInit();
@@ -103,7 +141,7 @@ void main()
 
         boardService();
         ledStripService();
-
+        updateBitBuffer();
 
         // Spam XDATA with reads and writes to see if there will be a problem.
         __asm mov dptr,#_x __endasm;
