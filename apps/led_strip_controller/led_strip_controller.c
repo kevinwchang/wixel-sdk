@@ -3,6 +3,8 @@
 #include <usb_com.h>
 #include <stdio.h>
 
+void updateBitBuffer(void);
+
 #define LED_DMA (dmaConfig._2)
 #define DMA_CHANNEL_LED 2
 
@@ -92,44 +94,8 @@ void ledStripService()
     if (getMs() - lastTime >= 30)
     {
         lastTime = getMs();
+        updateBitBuffer();
         ledStripStartTransfer();
-    }
-}
-
-uint8 volatile XDATA x;
-
-void putchar(char x)
-{
-    usbComTxSendByte(x);
-}
-
-void usbToBitBuffer()
-{
-    static uint16 n = 0;
-
-    if (usbComRxAvailable() && usbComTxAvailable() >= 32)
-    {
-        uint16 i;
-        switch(usbComRxReceiveByte())
-        {
-        case 'a':
-            n++;
-            if (n >= LED_DATA_BITS){ n = 0; }
-            break;
-        case 'd':
-            n--;
-            if (n == 0xFFFF){ n = LED_DATA_BITS-1; }
-            break;
-        default:
-            return;
-        }
-        printf("n=%d\r\n", n);
-
-        for (i = 0; i < LED_DATA_BITS; i++)
-        {
-            bitBuffer[1+i] = L;
-        }
-        bitBuffer[1+n] = H;
     }
 }
 
@@ -164,18 +130,5 @@ void main()
 
         boardService();
         ledStripService();
-        //usbToBitBuffer();
-        updateBitBuffer();
-
-        // Spam XDATA with reads and writes to see if there will be a problem.
-        __asm mov dptr,#_x __endasm;
-        __asm movx @dptr,a __endasm;
-        __asm movx @dptr,a __endasm;
-        __asm movx @dptr,a __endasm;
-        __asm movx @dptr,a __endasm;
-        __asm movx a,@dptr __endasm;
-        __asm movx a,@dptr __endasm;
-        __asm movx a,@dptr __endasm;
-        __asm movx a,@dptr __endasm;
     }
 }
