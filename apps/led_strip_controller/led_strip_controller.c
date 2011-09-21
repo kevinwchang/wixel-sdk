@@ -9,8 +9,8 @@
 #define INVERT
 
 #define PERIOD 23
-#define H 8
-#define L 15
+#define H 15
+#define L 9
 
 //#define PERIOD 30
 //#define H 10
@@ -18,11 +18,9 @@
 
 #define LED_DATA_BITS 96
 
-volatile uint8 XDATA bitBuffer[LED_DATA_BITS+1] =
+volatile uint8 XDATA bitBuffer[LED_DATA_BITS+2] =
 {
-        H, H, H, H, H, H, H, H,
-        H, H, H, H, H, H, H, H,
-        H, H, H, H, H, H, H, H,
+        255, // Padding
 
         H, H, H, H, H, H, H, H,
         H, H, H, H, H, H, H, H,
@@ -36,7 +34,11 @@ volatile uint8 XDATA bitBuffer[LED_DATA_BITS+1] =
         H, H, H, H, H, H, H, H,
         H, H, H, H, H, H, H, H,
 
-        255,  // Reset
+        H, H, H, H, H, H, H, H,
+        H, H, H, H, H, H, H, H,
+        H, H, H, H, H, H, H, H,
+
+        0,  // Reset
 };
 
 // Experimentally, we found that duty cycles of 10 or lower are bad.
@@ -54,9 +56,9 @@ void ledStripInit()
     T3CC1 = 0;       // Set the duty cycle.
     T3CCTL0 = 0b00000100;  // Enable the channel 0 compare, which triggers the DMA at the end of every period.
 #ifdef INVERT
-    T3CCTL1 = 0b00100100;  // T3CH1: Timer disabled, clear output on compare up, set on 0.
+    T3CCTL1 = 0b00011100;  // T3CH1: Interrupt disabled, set output on compare up, clear on 0.
 #else
-    T3CCTL1 = 0b00011100;  // T3CH1: Timer disabled, set output on compare up, clear on 0.
+    T3CCTL1 = 0b00100100;  // T3CH1: Interrupt disabled, clear output on compare up, set on 0.
 #endif
     T3CTL = 0b00010010;  // Start the timer with Prescaler 1:1, modulo mode (counts from 0 to T3CC0).
 
@@ -121,9 +123,9 @@ void updateBitBuffer()
 
         for (i = 0; i < LED_DATA_BITS; i++)
         {
-            bitBuffer[i] = L;
+            bitBuffer[1+i] = L;
         }
-        bitBuffer[n] = H;
+        bitBuffer[1+n] = H;
     }
 }
 
