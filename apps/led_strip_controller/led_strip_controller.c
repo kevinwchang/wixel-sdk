@@ -10,14 +10,11 @@ void updateBitBuffer(void);
 
 #define INVERT
 
-//#define PERIOD 23
-//#define LED_BIT_H 15
-//#define LED_BIT_L 9
-
-// TODO: experiment to find the allowed region of values for these three constants
-#define PERIOD 30
-#define LED_BIT_H 20
+// These values are consistent with the datasheet, and also work in practice.
+// There is a rise time of about 80ns (two ticks) dues to the 1k pull-up resistor.
+#define PERIOD 25
 #define LED_BIT_L 12
+#define LED_BIT_H 18
 
 #define LED_DATA_BITS 768
 
