@@ -19,6 +19,9 @@
 
 #define LED_DATA_BITS 768
 
+#define LED_COUNT  (LED_DATA_BITS/24)
+#define LED_BIT(v) ((v) ? H : L)
+
 volatile uint8 XDATA bitBuffer[LED_DATA_BITS+2] =
 {
         255, // Padding
@@ -100,7 +103,7 @@ void putchar(char x)
     usbComTxSendByte(x);
 }
 
-void updateBitBuffer()
+void usbToBitBuffer()
 {
     static uint16 n = 0;
 
@@ -130,6 +133,22 @@ void updateBitBuffer()
     }
 }
 
+void updateBitBuffer()
+{
+    uint16 time = getMs() >> 1;
+    uint8 i, j;
+
+    for(i = 0; i < LED_COUNT; i++)
+    {
+        for(j = 0; j < 8; j++)
+        {
+            bitBuffer[1 + 24*i + j] = LED_BIT(time >> (7-j) & 1);
+            bitBuffer[1 + 24*i + 8 + j] = LED_BIT(time >> (7-j) & 1);
+            bitBuffer[1 + 24*i + 16 + j] = LED_BIT(time >> (7-j) & 1);
+        }
+    }
+}
+
 void main()
 {
     systemInit();
@@ -144,6 +163,7 @@ void main()
 
         boardService();
         ledStripService();
+        //usbToBitBuffer();
         updateBitBuffer();
 
         // Spam XDATA with reads and writes to see if there will be a problem.
