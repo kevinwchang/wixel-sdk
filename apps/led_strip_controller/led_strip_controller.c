@@ -12,11 +12,12 @@
 //#define H 15
 //#define L 9
 
+// TODO: experiment to find the allowed region of values for these three constants
 #define PERIOD 30
 #define H 20
 #define L 12
 
-#define LED_DATA_BITS 96
+#define LED_DATA_BITS 768
 
 volatile uint8 XDATA bitBuffer[LED_DATA_BITS+2] =
 {
@@ -67,8 +68,8 @@ void ledStripInit()
     LED_DMA.SRCADDRL = (unsigned int)bitBuffer;
     LED_DMA.DESTADDRH = XDATA_SFR_ADDRESS(T3CC1) >> 8;
     LED_DMA.DESTADDRL = XDATA_SFR_ADDRESS(T3CC1);
-    LED_DMA.LENL = sizeof(bitBuffer);
-    LED_DMA.VLEN_LENH = 0;
+    LED_DMA.LENL = (uint8)sizeof(bitBuffer);
+    LED_DMA.VLEN_LENH = (uint8)(sizeof(bitBuffer) >> 8);
     LED_DMA.DC6 = 0b00000111; // WORSIZE = 0, TMODE = single, TRIG = 7 (Timer 3 compare ch 0)
     LED_DMA.DC7 = 0b01000010; // SRCINC = 1, DESTINC = 0, IRQMASK = 0, M8 = 0, PRIORITY = 2 (High)
 
@@ -101,11 +102,11 @@ void putchar(char x)
 
 void updateBitBuffer()
 {
-    static uint8 n = 0;
+    static uint16 n = 0;
 
     if (usbComRxAvailable() && usbComTxAvailable() >= 32)
     {
-        uint8 i;
+        uint16 i;
         switch(usbComRxReceiveByte())
         {
         case 'a':
@@ -114,7 +115,7 @@ void updateBitBuffer()
             break;
         case 'd':
             n--;
-            if (n == 255){ n = LED_DATA_BITS-1; }
+            if (n == 0xFFFF){ n = LED_DATA_BITS-1; }
             break;
         default:
             return;
