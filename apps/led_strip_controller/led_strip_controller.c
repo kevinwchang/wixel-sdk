@@ -5,8 +5,15 @@
 #define LED_DMA (dmaConfig._2)
 #define DMA_CHANNEL_LED 2
 
+#define INVERT
+
+#define PERIOD 23
 #define H 8
 #define L 15
+
+//#define PERIOD 30
+//#define H 10
+//#define L 25
 
 volatile uint8 XDATA bitBuffer[96+1] =
 {
@@ -40,10 +47,14 @@ void ledStripInit()
 
     // Set Timer 3 modulo mode (period is set by T3CC0)
     // Set Timer 3 Channel 1 (P1_4) to output compare mode.
-    T3CC0 = 23;       // Set the period
+    T3CC0 = PERIOD;       // Set the period
     T3CC1 = 0;       // Set the duty cycle.
     T3CCTL0 = 0b00000100;  // Enable the channel 0 compare, which triggers the DMA at the end of every period.
-    T3CCTL1 = 0b00011100;  // T3CH1: Timer disabled, clear output on compare up, set on 0.
+#ifdef INVERT
+    T3CCTL1 = 0b00100100;  // T3CH1: Timer disabled, clear output on compare up, set on 0.
+#else
+    T3CCTL1 = 0b00011100;  // T3CH1: Timer disabled, set output on compare up, clear on 0.
+#endif
     T3CTL = 0b00010010;  // Start the timer with Prescaler 1:1, modulo mode (counts from 0 to T3CC0).
 
     LED_DMA.DC6 = 19; // WORDSIZE = 0, TMODE = 0, TRIG = 19
@@ -62,7 +73,6 @@ void ledStripInit()
 
 void ledStripStartTransfer()
 {
-
     DMAARM |= (1 << DMA_CHANNEL_LED);
 }
 
@@ -73,7 +83,6 @@ void ledStripService()
     if (getMs() - lastTime >= 30)
     {
         lastTime = getMs();
-
         ledStripStartTransfer();
     }
 }
