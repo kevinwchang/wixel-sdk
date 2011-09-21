@@ -135,15 +135,16 @@ void usbToBitBuffer()
 
 void updateBitBuffer()
 {
-    uint16 time = getMs() >> 1;
+    uint16 time = getMs() >> 2;
     uint8 i, j;
 
     for(i = 0; i < LED_COUNT; i++)
     {
+        time -= 8;
         for(j = 0; j < 8; j++)
         {
             bitBuffer[1 + 24*i + j] = LED_BIT(time >> (7-j) & 1);
-            bitBuffer[1 + 24*i + 8 + j] = LED_BIT(time >> (7-j) & 1);
+            bitBuffer[1 + 24*i + 8 + j] = LED_BIT(~time >> (7-j) & 1);
             bitBuffer[1 + 24*i + 16 + j] = LED_BIT(time >> (7-j) & 1);
         }
     }
