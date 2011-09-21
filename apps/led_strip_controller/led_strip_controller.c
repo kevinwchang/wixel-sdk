@@ -8,13 +8,13 @@
 
 #define INVERT
 
-#define PERIOD 23
-#define H 15
-#define L 9
+//#define PERIOD 23
+//#define H 15
+//#define L 9
 
-//#define PERIOD 30
-//#define H 10
-//#define L 25
+#define PERIOD 30
+#define H 20
+#define L 12
 
 #define LED_DATA_BITS 96
 
