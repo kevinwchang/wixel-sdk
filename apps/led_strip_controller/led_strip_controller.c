@@ -11,47 +11,33 @@ void updateBitBuffer(void);
 #define INVERT
 
 //#define PERIOD 23
-//#define H 15
-//#define L 9
+//#define LED_BIT_H 15
+//#define LED_BIT_L 9
 
 // TODO: experiment to find the allowed region of values for these three constants
 #define PERIOD 30
-#define H 20
-#define L 12
+#define LED_BIT_H 20
+#define LED_BIT_L 12
 
 #define LED_DATA_BITS 768
 
 #define LED_COUNT  (LED_DATA_BITS/24)
-#define LED_BIT(v) ((v) ? H : L)
+#define LED_BIT(v) ((v) ? LED_BIT_H : LED_BIT_L)
 
-volatile uint8 XDATA bitBuffer[LED_DATA_BITS+2] =
-{
-        255, // Padding
+volatile uint8 XDATA bitBuffer[LED_DATA_BITS+2];
 
-        H, H, H, H, H, H, H, H,
-        H, H, H, H, H, H, H, H,
-        H, H, H, H, H, H, H, H,
-
-        H, H, H, H, H, H, H, H,
-        H, H, H, H, H, H, H, H,
-        H, H, H, H, H, H, H, H,
-
-        H, H, H, H, H, H, H, H,
-        H, H, H, H, H, H, H, H,
-        H, H, H, H, H, H, H, H,
-
-        H, H, H, H, H, H, H, H,
-        H, H, H, H, H, H, H, H,
-        H, H, H, H, H, H, H, H,
-
-        0,  // Reset
-};
-
-// Experimentally, we found that duty cycles of 10 or lower are bad.
-// It must be because the DMA takes some time.
-
+// NOTE: This code produces a 1-period glitch (high pulse) at the end of the data transfer.
+// It will probably be hard to fix that glitch, because it will require a new interrupt to be used.
 void ledStripInit()
 {
+    uint16 i;
+    for(i = 1; i < sizeof(bitBuffer)-1; i++)
+    {
+        bitBuffer[i] = LED_BIT_L;
+    }
+    bitBuffer[0] = 255;
+    bitBuffer[sizeof(bitBuffer)-1] = 0;
+
     P1_4 = 0;
     P1DIR |= (1<<4);
     P1SEL |= (1<<4);  // Assign P1_4 to a peripheral function instead of GPIO.
@@ -82,11 +68,6 @@ void ledStripInit()
 
 }
 
-void ledStripStartTransfer()
-{
-    DMAARM |= (1 << DMA_CHANNEL_LED);
-}
-
 void ledStripService()
 {
     static uint32 lastTime = 0;
@@ -95,7 +76,10 @@ void ledStripService()
     {
         lastTime = getMs();
         updateBitBuffer();
-        ledStripStartTransfer();
+
+        // Start the transfer of data to the LED strip.
+        // It will finish in about LED_DATA_BITS * (PERIOD + 1) / 24 microseconds.
+        DMAARM |= (1 << DMA_CHANNEL_LED);
     }
 }
 
