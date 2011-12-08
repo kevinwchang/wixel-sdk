@@ -7,7 +7,7 @@
  * <pre>include <time.h></pre>
  * or
  * <pre>include <wixel.h></pre>
- * in the same source file that contains your main() function.
+ * in the source file that contains your main() function.
  * Also, you must call boardClockInit() or else the timing will
  * be wrong.
  *
@@ -35,7 +35,7 @@ uint32 getMs();
 
 /*! This interrupt fires once per millisecond (approximately) and
  * increments timeMs. */
-ISR(T4, 1);
+ISR(T4, 0);
 
 /*! \param microseconds  The number of microseconds delay; any value between 0 and 255.
  *

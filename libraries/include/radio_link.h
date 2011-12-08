@@ -11,12 +11,15 @@
  * For wireless communication between more than two Wixels, you can use
  * <code>radio_queue.lib</code> (see radio_queue.h).
  *
- * Similarly, this library also restricts us to only having one logical data pipe.
- * If you wanted to send some extra data that doesn't get NAKed, or gets NAKed at
+ * Similarly, this library also restricts the Wixels to only having one logical data pipe.
+ * If you want to send some extra data that doesn't get NAKed, or gets NAKed at
  * different times then the regular data, you would need to replace this library with
  * something more complicated that keeps track of different streams and schedules them.
  *
- * This library depends on <code>radio_mac.lib</code>.
+ * This library depends on <code>radio_mac.lib</code>, which uses an interrupt.
+ * For this library to work, you must write
+ * <code>include <radio_link.h></code>
+ * in the source file that contains your main() function.
  */
 
 #ifndef _RADIO_LINK
@@ -161,5 +164,16 @@ uint8 radioLinkRxCurrentPayloadType(void);
 /*! Frees the current RX packet so that you can advance to processing
  * the next one.  See the radioLinkRxCurrentPacket() documentation for details. */
 void radioLinkRxDoneWithPacket(void);
+
+/*! \return 1 if a connection to another Wixel has been established.
+ *
+ * Currently the radio_link library does not detect disconnection, so this value
+ * will never change from 1 to 0. */
+BIT radioLinkConnected(void);
+
+/*! The library will set this bit to 1 whenever it receives a packet that
+ * has payload data in it or sends a packet.
+ * Higher-level code may check this bit and clear it. */
+extern volatile BIT radioLinkActivityOccurred;
 
 #endif

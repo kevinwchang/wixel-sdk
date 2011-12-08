@@ -2,9 +2,9 @@
 // hardware on the Wixel.  Includes LED, power detection, and common
 // timing/delay functions.
 
-// TODO: Allow for getting in to bootloader mode when the yellow LED is on
+// TODO: Allow for getting into bootloader mode when the yellow LED is on
 //    (need to turn it off for a brief time).
-// TODO: only go in to bootloader mode if there is USB power
+// TODO: only go into bootloader mode if there is USB power
 // TODO: add a section of the library for using the watchdog timer
 // TODO: let delayMicroseconds take a 16-bit argument
 // TODO: WHY does this interrupt only result in a 6 us pulse?
@@ -114,12 +114,14 @@ void boardStartBootloader()
 
     DMAARM = 0x9F;      // Disarm all DMA channels.
 
-    delayMs(10);        // Probably not necessary anymore.
+    delayMicroseconds(10);  // Probably not necessary anymore.  Used to be 10 milliseconds.
 
-    P0DIR = 0;          // Make all the IO lines be inputs.  That's going to happen later in
-    P1DIR = 0;          // the bootloader anyway.  We might as well do it now so that any devices
-    P2DIR = 0;          // such as motors stop running right away.  This also signals to the USB host
-                        // that we are disconnecting.
+    // Make all the IO lines be inputs.  That's going to happen later in
+    // the bootloader anyway.  We might as well do it now so that any devices
+    // such as motors stop running right away.  This also signals to the USB host
+    // that we are disconnecting.
+    P0DIR = P1DIR = P2DIR = 0;
+    P0SEL = P1SEL = P2SEL = 0;
 
     delayMs(100);       // Delay to give the USB host a chance to detect that we disconnected.
     __asm ljmp 6 __endasm;

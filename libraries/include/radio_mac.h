@@ -15,6 +15,11 @@
  *
  * This library defines an ISR, so radio_mac.h must be included in the
  * file that defines main() in order for this library to work.
+ *
+ * This library uses an interrupt.
+ * For this library to work, you must write
+ * <code>include <radio_mac.h></code>
+ * in the source file that contains your main() function.
  */
 
 #ifndef _RADIO_MAC_H_
@@ -49,7 +54,7 @@ void radioMacInit(void);
  *
  * The idea behind this function is that higher-level code running
  * in the main loop would call it whenever it has placed new
- * data in to a buffer, in order to wake up the interrupt-based
+ * data into a buffer, in order to wake up the interrupt-based
  * code to so it can use the new data. */
 void radioMacStrobe(void);
 
@@ -115,6 +120,6 @@ extern volatile BIT radioRxOverflowOccurred;
 extern volatile BIT radioTxUnderflowOccurred;
 
 /*! The radio's Interrupt Service Routine (ISR). */
-ISR(RF, 1);
+ISR(RF, 0);
 
 #endif /* RADIO_H_ */

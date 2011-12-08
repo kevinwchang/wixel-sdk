@@ -2,10 +2,15 @@
  * The <code>radio_com.lib</code> library provides reliable, ordered
  * delivery and reception of a stream of bytes between two devices.
  * This library depends on <code>radio_link.lib</code>.
- *
  * For many applications, this library is easier to use than
  * <code>radio_link.lib</code> because this library takes care of
- * dividing the stream of bytes in to packets.
+ * dividing the stream of bytes into packets.
+ *
+ * This library depends on <code>radio_link.lib</code>, which depends on
+ * <code>radio_mac.lib</code>, which uses an interrupt.
+ * For this library to work, you must write
+ * <code>include <radio_com.h></code>
+ * in the source file that contains your main() function.
  *
  * This library has the same limitations as <code>radio_link.lib</code>:
  * It does not work if there are more than two Wixels broadcasting
@@ -19,6 +24,8 @@
 
 #ifndef _RADIO_COM_H_
 #define _RADIO_COM_H_
+
+#include <radio_link.h>
 
 typedef void (PacketModifierFunction)(uint8 XDATA * packet);
 
@@ -44,7 +51,7 @@ void radioComInit(void);
  *
  * We recommend that if you call radioComRxControlSignals(), you should call it regularly
  * and set #radioComRxEnforceOrdering to 1 at the beginning of your program.  If you are not
- * using the control signals, you can leave this bit at 0. */
+ * using the control signals, you should leave this bit at 0. */
 extern BIT radioComRxEnforceOrdering;
 
 /*! A pointer to a function that will be called just after a packet is received. */

@@ -2,12 +2,12 @@
 #
 # wixel_tools_mui.nsi - installer script for the wixel development bundle
 #
-# Last modified: 110322 by KK
-#
 ####################
 
 # This installer expects to be passed the variable "STARTDIR" at the command line
 # E.g. "makensis /DSTARTDIR=c:\working\wixel-installer c:\working\wixel-installer\wixel_tools_mui.nsi"
+
+# TODO: improve the user experience in the case where they choose to not install the Wixel SDK
 
 !include FileFunc.nsh
 !include EnvVarUpdate.nsh
@@ -20,7 +20,7 @@ RequestExecutionLevel admin
 ; !define STARTDIR=c:\foo\bar
 !define WIXELTOOLVERSION "110415"
 !define SDCCVER "3.0.0"
-!define NPVER "5.8.7"
+!define NPVER "5.9"
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP "${STARTDIR}\wixel-sdk\installer\wixel_fullname_sm.bmp"
 !define MUI_HEADERIMAGE_BITMAP_NOSTRETCH 

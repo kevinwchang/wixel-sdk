@@ -1,4 +1,8 @@
-// test_radio_link.c: A little program that lets you test the radio_link library.
+/** test_radio_link app:
+
+This app lets you test the radio_link library.  This app is mainly intended for
+people who are debugging the library.
+*/
 
 #include <wixel.h>
 #include <usb.h>
@@ -26,6 +30,8 @@ void updateLeds()
     {
         LED_RED(0);
     }
+
+    LED_YELLOW(radioLinkConnected());
 }
 
 uint8 nibbleToAscii(uint8 nibble)
@@ -82,9 +88,9 @@ void handleCommands()
         uint8 byte = usbComRxReceiveByte();
         if (byte == (uint8)'?')
         {
-            responseLength = sprintf(response, "? RX=%d/%d, TX=%d/%d\r\n",
+            responseLength = sprintf(response, "? RX=%d/%d, TX=%d/%d, M=%02x\r\n",
                     radioLinkRxMainLoopIndex, radioLinkRxInterruptIndex,
-                    radioLinkTxMainLoopIndex, radioLinkTxInterruptIndex);
+                    radioLinkTxMainLoopIndex, radioLinkTxInterruptIndex, MARCSTATE);
             usbComTxSend(response, responseLength);
         }
         else if (byte >= (uint8)'a' && byte <= (uint8)'g')

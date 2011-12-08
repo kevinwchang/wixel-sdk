@@ -12,7 +12,7 @@ microcontroller from Texas Instruments, which has an integrated radio transceive
 
 \section starting Getting Started
 
-To load apps onto the Wixel, you will also need to have
+To load apps onto the Wixel, you will need to have
 the Wixel's drivers and software installed on your system.
 See the <i>Getting Started</i> section of the 
 <a href="http://www.pololu.com/docs/0J46">Pololu Wixel User's Guide</a>.
@@ -21,24 +21,37 @@ To develop your own apps or modify existing ones using the Wixel SDK,
 you will need to have a copy of the Wixel SDK,
 <a href="http://sdcc.sourceforge.net/">SDCC</a> version 3.0.0 or later,
 and you will need to have certain GNU utililties available on your path:
-cat, cp, echo, grep, make, mv, and rm.
+cat, cp, echo, grep, make, mv, rm, and sed.
+
 For Windows users, we recommend that you install all of these components
 by downloading the <b>Wixel Development Bundle</b>, available from the
 <a href="http://www.pololu.com/docs/0J46">Pololu Wixel User's Guide</a>.
 
-The Wixel SDK is also available as a
-<a href="http://github.com/pololu/wixel-sdk">git repository hosted on GitHub</a>.
+Please see the <i>Writing Your Own Wixel App</i>
+section of the 
+<a href="http://www.pololu.com/docs/0J46">Pololu Wixel User's Guide</a>
+for step-by-step instructions for getting started with the Wixel SDK.
+
+\section sdk Downloading the Wixel SDK itself
+
+The Wixel SDK is available as a
+<a href="http://github.com/pololu/wixel-sdk">git repository hosted on github</a>.
 You can get the latest version by installing <a href="http://git-scm.com/">git</a>
 and running:
 <pre>
 git clone -o pololu git://github.com/pololu/wixel-sdk.git
 </pre>
 
-If you need help, see GitHub's instructions on how to
+If you need help, see github's instructions on how to
 <a href="http://help.github.com/set-up-git-redirect">Set Up Git</a>.
 For Windows users, we also recommend installing
 <a href="http://code.google.com/p/tortoisegit/">TortoiseGit</a>
 because it provides a good graphical user interface for git.
+
+You can also download the 
+<a href="https://github.com/pololu/wixel-sdk/zipball/latest">latest version of the Wixel SDK</a>
+from github.
+
 
 \section building_app Building and Loading Apps
 
@@ -108,7 +121,7 @@ Documentation for SDCC is available on the <a href="http://sdcc.sourceforge.net/
 
 \section make_exception Make Interrupt/Exception Error
 
-You might get the following error message when trying to run make in Windows:
+You might get the following error message from make in Windows:
 <pre>
 make: Interrupt/Exception caught (code = 0xc00000fd, addr = 0x425073)
 </pre>
@@ -119,16 +132,15 @@ This version of make is included in the latest <b>Wixel Development Bundle</b>,
 available from the <a href="http://www.pololu.com/docs/0J46">Pololu Wixel User's Guide</a>.
 If the output from "make -v" shows some other version of make even after
 installing the Wixel Development Bundle, then you should remove that other version
-of make from your PATH or reorder your PATH so that that version 3.82-pololu1 is used.
-You can edit your PATH environment variable by going to <b>Control Panel ->
-System -> Advanced System Settings -> Environment Variables</b>.
-See <a href="https://github.com/pololu/make/wiki">pololu/make wiki on GitHub for
-more information</a>.
+of make from your PATH or reorder your PATH so that version 3.82-pololu1 is used.
+You can edit your PATH environment variable from the Control Panel.
+See the <a href="https://github.com/pololu/make/wiki">pololu/make wiki on github</a>
+for more information on this problem.
 
 \section help Getting Help
 
 If you have a problem or question, feel free to ask us on the
-<a href="http://forum.pololu.com/viewforum.php?f=3">Pololu Forum</a>.
+<a href="http://forum.pololu.com/viewforum.php?f=30">Pololu Forum</a>.
 
 
 **/
@@ -177,17 +189,22 @@ If you have a problem or question, feel free to ask us on the
 
 - <b>adc.lib (adc.h):</b> Uses the Analog-to-Digital Converter (ADC) to read analog voltages.
 - <b>gpio.lib (gpio.h):</b> Uses the CC2511's pins as general purpose inputs or outputs (GPIO).
+- <b>i2c.lib (i2c.h):</b> Provides a basic software (bit-banging) implementation of a master
+  node for I<sup>2</sup>C communication.  Depends on <b>gpio.lib</b> and <b>wixel.lib</b>.
+- <b>servo.lib (servo.h):</b> Provides the ability to control up to 6
+   RC servos by generating digital pulses directly from your Wixel without the
+   need for a separate servo controller.
 - <b>uart.lib (uart0.h, uart1.h):</b> Uses USART0 and/or USART1 in UART mode to send and
   receive serial bytes.
 
 \section basic_libs Basic Libraries
 
 - <b>wixel.lib (board.h, time.h)</b>: Takes care of everything that is specific
-  to the Wixel hardware, including managing LEDs and other IO lines, detecting
+  to the Wixel hardware, including managing LEDs and other I/O lines, detecting
   the current power source, keeping track of time, and providing delay
   functions.
 - <b>dma.lib (dma.h)</b>: Coordinates the use of DMA channels 1-3.  Does not touch DMA channel 0.
-- <b>random.lib (random.h)</b>: Takes care of generating random numbers. 
+- <b>random.lib (random.h)</b>: Takes care of generating random numbers.
 
 \section libc Standard C Libraries
 

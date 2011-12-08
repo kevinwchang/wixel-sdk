@@ -6,13 +6,16 @@
 
 /*
  * TODO: To avoid damage, don't enable nDTR and nRTS outputs by default.
- * TODO: Support for USB CDC ACM control signals.
  * TODO: use LEDs to give feedback about sending/receiving bytes.
  * TODO: UART flow control.
- * TODO: Better radio protocol (see TODOs in radio_link.c).
  * TODO: Obey CDC-ACM Set Line Coding commands:
  *       In USB-RADIO mode, bauds 0-255 would correspond to radio channels.
  * TODO: shut down radio when we are in a different serial mode
+ * TODO: make the heartbeat blinks on the Wixels be synchronized (will require
+ *       major changes to the radio_link library)
+ * TODO: turn on red LED or flash it if the Wixel is in a mode that requires USB
+ *       but has not reached the USB Configured State (this avoids the problem of
+ *       having 0 LEDs on when the Wixel is in USB-UART mode and self powered)
  */
 
 /** Dependencies **************************************************************/
@@ -48,26 +51,98 @@ int32 CODE param_CD_pin = -1;
 
 int32 CODE param_arduino_DTR_pin = 0;
 
+// Approximate number of milliseconds to disable UART's receiver for after a
+// framing error is encountered.
+// Valid values are 0-250.
+// A value of 0 disables the feature (the UART's receiver will not be disabled).
+// The actual number of milliseconds that the receiver is disabled for will be
+// between param_framing_error_ms and param_framing_error_ms + 1.
+int32 CODE param_framing_error_ms = 0;
+
+/** Global Variables **********************************************************/
+
+// This bit is 1 if the UART's receiver has been disabled due to a framing error.
+// This bit should be equal to !U1CSR.RE, but we need this variable because we
+// don't want to be reading U1CSR in the main loop, because reading it might
+// cause the FE or ERR bits to be cleared and then the ISR
+// would not receive notice of those errors.
+BIT uartRxDisabled = 0;
+
+uint8 DATA currentSerialMode;
+
+BIT framingErrorActive = 0;
+
+BIT errorOccurredRecently = 0;
+uint8 lastErrorTime;
+
 /** Functions *****************************************************************/
+
 void updateLeds()
 {
+    static BIT dimYellowLed = 0;
+    static uint16 lastRadioActivityTime;
+    uint16 now;
+
     usbShowStatusWithGreenLed();
 
-    LED_YELLOW(vinPowerPresent());
+    now = (uint16)getMs();
 
-    // Turn on the red LED if the radio is in the RX_OVERFLOW state.
-    // There used to be several bugs in the radio libraries that would cause
-    // the radio to go in to this state, but hopefully they are all fixed now.
-    if (MARCSTATE == 0x11)
+    if (currentSerialMode == SERIAL_MODE_USB_UART)
     {
-        LED_RED(1);
+        // The radio is not being used, so turn off the yellow LED.
+        LED_YELLOW(0);
+    }
+    else if (!radioLinkConnected())
+    {
+        // We have not connected to another device wirelessly yet, so do a
+        // 50% blink with a period of 1024 ms.
+        LED_YELLOW(now & 0x200 ? 1 : 0);
     }
     else
     {
-        LED_RED(0);
+        // We have connected.
+
+        if ((now & 0x3FF) <= 20)
+        {
+            // Do a heartbeat every 1024ms for 21ms.
+            LED_YELLOW(1);
+        }
+        else if (dimYellowLed)
+        {
+            static uint8 DATA count;
+            count++;
+            LED_YELLOW((count & 0x7)==0);
+        }
+        else
+        {
+            LED_YELLOW(0);
+        }
     }
+
+    if (radioLinkActivityOccurred)
+    {
+        radioLinkActivityOccurred = 0;
+        dimYellowLed ^= 1;
+        //dimYellowLed = 1;
+        lastRadioActivityTime = now;
+    }
+
+    if ((uint16)(now - lastRadioActivityTime) > 32)
+    {
+        dimYellowLed = 0;
+    }
+
+    if ((uint8)(now - lastErrorTime) > 100)
+    {
+        errorOccurredRecently = 0;
+    }
+
+    LED_RED(errorOccurredRecently || uartRxDisabled);
 }
 
+/* Returns the logical values of the input control signal pins.
+   Bit 0 is DSR.
+   Bit 1 is CD. */
 uint8 ioRxSignals()
 {
     uint8 signals = 0;
@@ -87,6 +162,10 @@ uint8 ioRxSignals()
     return signals;
 }
 
+/* Sets the logical values of the output control signal pins.
+   This should be called frequently (not just when the values change).
+   Bit 0 is DTR.
+   Bit 1 is RTS. */
 void ioTxSignals(uint8 signals)
 {
     static uint8 nTrstPulseStartTime;
@@ -116,27 +195,89 @@ void ioTxSignals(uint8 signals)
     lastSignals = signals;
 }
 
-uint8 currentSerialMode()
+void errorOccurred()
+{
+    lastErrorTime = (uint8)getMs();
+    errorOccurredRecently = 1;
+}
+
+void errorService()
+{
+    static uint8 lastRxLowTime;
+
+    if (uart1RxBufferFullOccurred)
+    {
+        uart1RxBufferFullOccurred = 0;
+        errorOccurred();
+    }
+
+    if (uart1RxFramingErrorOccurred)
+    {
+        uart1RxFramingErrorOccurred = 0;
+
+        // A framing error occurred.
+        framingErrorActive = 1;
+        errorOccurred();
+
+        if (param_framing_error_ms > 0)
+        {
+            // Disable the UART's receiver.
+            U1CSR &= ~0x40;    // U1CSR.RE = 0.  Disables reception of bytes on the UART.
+            uartRxDisabled = 1;
+            lastRxLowTime = (uint8)getMs();  // Initialize lastRxLowTime even if the line isn't low right now.
+        }
+    }
+
+    if (framingErrorActive)
+    {
+        if (!isPinHigh(17))
+        {
+            errorOccurred();
+        }
+        else
+        {
+            framingErrorActive = 0;
+        }
+    }
+
+    if (uartRxDisabled)
+    {
+        if (!isPinHigh(17))
+        {
+            // The line is low.
+            lastRxLowTime = (uint8)getMs();
+        }
+        else if ((uint8)(getMs() - lastRxLowTime) > param_framing_error_ms)
+        {
+            // The line has been high for long enough, so re-enable the receiver.
+            U1CSR |= 0x40;
+            uartRxDisabled = 0;
+        }
+    }
+}
+
+void updateSerialMode()
 {
     if ((uint8)param_serial_mode > 0 && (uint8)param_serial_mode <= 3)
     {
-        return (uint8)param_serial_mode;
+        currentSerialMode = (uint8)param_serial_mode;
+        return;
     }
 
     if (usbPowerPresent())
     {
         if (vinPowerPresent())
         {
-            return SERIAL_MODE_USB_UART;
+            currentSerialMode = SERIAL_MODE_USB_UART;
         }
         else
         {
-            return SERIAL_MODE_USB_RADIO;
+            currentSerialMode = SERIAL_MODE_USB_RADIO;
         }
     }
     else
     {
-        return SERIAL_MODE_UART_RADIO;
+        currentSerialMode = SERIAL_MODE_UART_RADIO;
     }
 }
 
@@ -230,8 +371,10 @@ void main()
 
     while(1)
     {
+        updateSerialMode();
         boardService();
         updateLeds();
+        errorService();
 
         if (param_serial_mode != SERIAL_MODE_USB_UART)
         {
@@ -240,7 +383,7 @@ void main()
 
         usbComService();
 
-        switch(currentSerialMode())
+        switch(currentSerialMode)
         {
         case SERIAL_MODE_USB_RADIO:  usbToRadioService();  break;
         case SERIAL_MODE_UART_RADIO: uartToRadioService(); break;
