@@ -27,8 +27,6 @@
 
 #include <radio_link.h>
 
-typedef void (PacketModifierFunction)(uint8 XDATA * packet);
-
 /*! Initializes the <code>radio_com.lib</code> library and the
  * lower-level libraries that it depends on.
  * This must be called before any of the other radioCom* functions. */
@@ -53,11 +51,6 @@ void radioComInit(void);
  * and set #radioComRxEnforceOrdering to 1 at the beginning of your program.  If you are not
  * using the control signals, you should leave this bit at 0. */
 extern BIT radioComRxEnforceOrdering;
-
-/*! A pointer to a function that will be called just after a packet is received. */
-extern PacketModifierFunction * radioComRxPacketModifier;
-/*! A pointer to a function that will be called just before a packet is transmitted. */
-extern PacketModifierFunction * radioComTxPacketModifier;
 
 /*! \return The number of bytes in the RX buffer.
  *
