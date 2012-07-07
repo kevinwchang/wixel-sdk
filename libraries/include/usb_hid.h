@@ -105,12 +105,12 @@ typedef struct HID_JOYSTICK_IN_REPORT
 {
     int8 x;  /*!< Joystick X axis position.  Valid values are from -127 to 127. */
     int8 y;  /*!< Joystick Y axis position.  Valid values are from -127 to 127. */
-    int8 z;  /*!< Joystick Z axis position.  Valid values are from -127 to 127. */
-    int8 rx; /*!< Joystick's rotation about the X axis.  Valid values are from -127 to 127. */
-    int8 ry; /*!< Joystick's rotation about the Y axis.  Valid values are from -127 to 127. */
-    int8 rz; /*!< Joystick's rotation about the Z axis.  Valid values are from -127 to 127. */
+    //int8 z;  /*!< Joystick Z axis position.  Valid values are from -127 to 127. */
+    //int8 rx; /*!< Joystick's rotation about the X axis.  Valid values are from -127 to 127. */
+    //int8 ry; /*!< Joystick's rotation about the Y axis.  Valid values are from -127 to 127. */
+    //int8 rz; /*!< Joystick's rotation about the Z axis.  Valid values are from -127 to 127. */
 
-    uint16 buttons; /*!< A bit map that specifies which buttons are pressed. */
+    uint8 buttons; /*!< A bit map that specifies which buttons are pressed. */
 } HID_JOYSTICK_IN_REPORT;
 
 /*! Contains \b output data received by the \b keyboard interface from the host.
