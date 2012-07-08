@@ -1,15 +1,6 @@
-/** example_blink_led app:
-This app blinks the red LED.
-
-For a precompiled version of this app and a tutorial on how to load this app
-onto your Wixel, see the Pololu Wixel User's Guide:
-http://www.pololu.com/docs/0J46
-*/
-
 #include <wixel.h>
 #include <usb.h>
-#include <usb_com.h>
-#include <stdio.h>
+#include <usb_hid.h>
 
 #define PIN_CLOCK 10
 #define PIN_LATCH 11
@@ -28,15 +19,7 @@ http://www.pololu.com/docs/0J46
 #define BUTTON_L     10
 #define BUTTON_R     11
 
-uint16 DATA buttons = 0, prev_buttons = 0; // each bit is 1 if pressed
-
-void updateLeds()
-{
-	usbShowStatusWithGreenLed();
-
-	LED_YELLOW(0);
-	LED_RED(buttons);
-}
+uint16 DATA buttons = 0, prevButtons = 0; // each bit is 1 if pressed
 
 void controllerInit()
 {
@@ -70,6 +53,34 @@ void readController()
 	EA = 1;
 }
 
+void gamePadService()
+{
+	if ((buttons & (1 << BUTTON_LEFT)) && !(buttons & (1 << BUTTON_RIGHT)))
+		usbHidJoystickInput.x = -127;
+	else if ((buttons & (1 << BUTTON_RIGHT)) && !(buttons & (1 << BUTTON_LEFT)))
+		usbHidJoystickInput.x = 127;
+	else
+		usbHidJoystickInput.x = 0;
+	
+	if ((buttons & (1 << BUTTON_UP)) && !(buttons & (1 << BUTTON_DOWN)))
+		usbHidJoystickInput.y = -127;
+	else if ((buttons & (1 << BUTTON_DOWN)) && !(buttons & (1 << BUTTON_UP)))
+		usbHidJoystickInput.y = 127;
+	else
+		usbHidJoystickInput.y = 0;
+	
+	usbHidJoystickInput.buttons = ((((buttons >> BUTTON_START ) & 1) << 0) |
+	                               (((buttons >> BUTTON_SELECT) & 1) << 1) |
+	                               (((buttons >> BUTTON_A     ) & 1) << 2) |
+	                               (((buttons >> BUTTON_B     ) & 1) << 3) |
+	                               (((buttons >> BUTTON_X     ) & 1) << 4) |
+	                               (((buttons >> BUTTON_Y     ) & 1) << 5) |
+	                               (((buttons >> BUTTON_L     ) & 1) << 6) |
+	                               (((buttons >> BUTTON_R     ) & 1) << 7));
+	
+	usbHidJoystickInputUpdated = 1;
+}
+
 #define LOOP_INTERVAL 5 // ms
 
 void main()
@@ -85,10 +96,15 @@ void main()
 		if ((uint8)(getMs() - lastLoop) > LOOP_INTERVAL)
 		{
 			boardService();
-			updateLeds();
-			usbComService();
 			
 			readController();
+			
+			if (buttons != prevButtons)
+			{
+				gamePadService();
+				prevButtons = buttons;
+			}
+			usbHidService();
 		}
 	}
 }
