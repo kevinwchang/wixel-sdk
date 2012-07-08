@@ -215,7 +215,7 @@ uint8 CODE joystickReportDescriptor[]
         HID_COLLECTION, HID_COLLECTION_PHYSICAL,
 
             HID_REPORT_COUNT, 2, // 2 Axes (X, Y)
-            HID_REPORT_SIZE, 4,
+            HID_REPORT_SIZE, 8,
             HID_USAGE, HID_USAGE_X,
             HID_USAGE, HID_USAGE_Y,
             HID_LOGICAL_MIN, -127,
@@ -352,7 +352,7 @@ CODE struct CONFIG1 {
 uint8 CODE usbStringDescriptorCount = 5;
 DEFINE_STRING_DESCRIPTOR(languages, 1, USB_LANGUAGE_EN_US)
 DEFINE_STRING_DESCRIPTOR(manufacturer, 18, 'P','o','l','o','l','u',' ','C','o','r','p','o','r','a','t','i','o','n')
-DEFINE_STRING_DESCRIPTOR(product, 5, 'W','i','x','e','l')
+DEFINE_STRING_DESCRIPTOR(product, 15, 'S','N','E','S',' ','C','o','n','t','r','o','l','l','e','r')
 /*DEFINE_STRING_DESCRIPTOR(keyboardName, 14, 'W','i','x','e','l',' ','K','e','y','b','o','a','r','d')
 DEFINE_STRING_DESCRIPTOR(mouseName, 11, 'W','i','x','e','l',' ','M','o','u','s','e')*/
 DEFINE_STRING_DESCRIPTOR(joystickName, 15, 'S','N','E','S',' ','C','o','n','t','r','o','l','l','e','r')
@@ -369,10 +369,10 @@ BIT usbHidKeyboardInputUpdated = 0;
 BIT usbHidMouseInputUpdated    = 0;
 BIT usbHidJoystickInputUpdated    = 0;
 
-uint16 XDATA hidKeyboardIdleDuration = 500; // 0 to 1020 ms
+/*uint16 XDATA hidKeyboardIdleDuration = 500; // 0 to 1020 ms
 
 BIT hidKeyboardProtocol = HID_PROTOCOL_REPORT;
-BIT hidMouseProtocol    = HID_PROTOCOL_REPORT;
+BIT hidMouseProtocol    = HID_PROTOCOL_REPORT;*/
 
 /* HID USB callbacks **********************************************************/
 // These functions are called by the low-level USB module (usb.c) when a USB
