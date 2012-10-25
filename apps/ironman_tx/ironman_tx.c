@@ -33,7 +33,7 @@ void main()
             if (!isPinHigh(0) && radioComTxAvailable())
             {
                 pressed = 1;
-                radioComTxSendByte('!');
+                radioComTxSendByte((uint8)'!');
             }
         }
         else if (pressed && isPinHigh(0))

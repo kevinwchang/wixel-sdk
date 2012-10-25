@@ -1,0 +1,1 @@
+APP_LIBS += servo.lib
