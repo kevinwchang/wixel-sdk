@@ -52,7 +52,7 @@ typedef __bit BIT;
 #define DATA __data
 
 /** Specifies that the variable is stored in the paged data area (the first 256 bytes
- * of XDATA).  This the default memory space for variables.  Accessing PDATA variables
+ * of XDATA).  This is the default memory space for variables.  Accessing PDATA variables
  * takes less code space than accessing XDATA variables.
  */
 #define PDATA __pdata
@@ -67,25 +67,13 @@ typedef __bit BIT;
 #elif defined(__CDT_PARSER__)
 
 // Avoid syntax and semantic errors in eclipse.
-#ifdef __CDT_PARSER__
-#define __xdata
-#define __pdata
-#define __data
-#define __code
-#define xdata
-#define pdata
-#define data
-#define __interrupt(x)
-#define __at(x)
-#define __using(x)
-#define __reentrant
 #define CODE
 #define XDATA
 #define DATA
 #define PDATA
 typedef unsigned char BIT;
 #define ISR(source, bank) void ISR_##source()
-#endif
+#define __reentrant
 
 #else
 #error "Unknown compiler."

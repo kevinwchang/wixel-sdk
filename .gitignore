@@ -12,11 +12,13 @@ apps/*/*
 *.d
 *.hex
 *.ihx
+*.lk
 *.lib
 *.lnk
 *.lst
 *.map
 *.mem
+*.omf
 *.rel
 *.rst
 *.sym
@@ -30,3 +32,7 @@ apps/*/*
 
 /libraries/src/uart/uart0.c
 /libraries/src/uart/uart1.c
+/libraries/src/spi_master/spi0_master.c
+/libraries/src/spi_master/spi1_master.c
+
+/installer/build/
