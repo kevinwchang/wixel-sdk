@@ -8,7 +8,7 @@ void updateBitBuffer(void);
 #define LED_DMA (dmaConfig._2)
 #define DMA_CHANNEL_LED 2
 
-#define INVERT
+#define INVERT // invert output to drive NMOS gate (level-shift to 5 V)
 
 // These values are consistent with the datasheet, and also work in practice.
 // There is a rise time of about 80ns (two ticks) dues to the 1k pull-up resistor.
@@ -42,23 +42,22 @@ void ledStripInit()
     // Set Timer 3 modulo mode (period is set by T3CC0)
     // Set Timer 3 Channel 1 (P1_4) to output compare mode.
     T3CC0 = PERIOD;       // Set the period
-    T3CC1 = 0;       // Set the duty cycle.
-    T3CCTL0 = 0b00000100;  // Enable the channel 0 compare, which triggers the DMA at the end of every period.
+    T3CC1 = 0;            // Set the duty cycle.
+    T3CCTL0 = 0b00000100; // Enable the channel 0 compare, which triggers the DMA at the end of every period.
 #ifdef INVERT
-    T3CCTL1 = 0b00011100;  // T3CH1: Interrupt disabled, set output on compare up, clear on 0.
+    T3CCTL1 = 0b00011100; // T3CH1: Interrupt disabled, set output on compare up, clear on 0.
 #else
-    T3CCTL1 = 0b00100100;  // T3CH1: Interrupt disabled, clear output on compare up, set on 0.
+    T3CCTL1 = 0b00100100; // T3CH1: Interrupt disabled, clear output on compare up, set on 0.
 #endif
-    T3CTL = 0b00010010;  // Start the timer with Prescaler 1:1, modulo mode (counts from 0 to T3CC0).
+    T3CTL = 0b00010010;   // Start the timer with Prescaler 1:1, modulo mode (counts from 0 to T3CC0).
 
-    LED_DMA.DC6 = 19; // WORDSIZE = 0, TMODE = 0, TRIG = 19
     LED_DMA.SRCADDRH = (unsigned int)bitBuffer >> 8;
     LED_DMA.SRCADDRL = (unsigned int)bitBuffer;
     LED_DMA.DESTADDRH = XDATA_SFR_ADDRESS(T3CC1) >> 8;
     LED_DMA.DESTADDRL = XDATA_SFR_ADDRESS(T3CC1);
     LED_DMA.LENL = (uint8)sizeof(bitBuffer);
     LED_DMA.VLEN_LENH = (uint8)(sizeof(bitBuffer) >> 8);
-    LED_DMA.DC6 = 0b00000111; // WORSIZE = 0, TMODE = single, TRIG = 7 (Timer 3 compare ch 0)
+    LED_DMA.DC6 = 0b00000111; // WORDSIZE = 0 (8-bit), TMODE = 0 (single), TRIG = 7 (Timer 3 compare ch 0)
     LED_DMA.DC7 = 0b01000010; // SRCINC = 1, DESTINC = 0, IRQMASK = 0, M8 = 0, PRIORITY = 2 (High)
 
     // We found that I priority of 1 (equal to the CPU) also works.
