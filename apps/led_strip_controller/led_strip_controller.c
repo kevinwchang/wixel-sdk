@@ -69,7 +69,7 @@ void ledStripService()
 {
     static uint32 lastTime = 0;
 
-    if (getMs() - lastTime >= 30)
+    //if (getMs() - lastTime >= 30)
     {
         lastTime = getMs();
         updateBitBuffer();
@@ -109,7 +109,6 @@ void main()
         usbComService();
         usbShowStatusWithGreenLed();
         //LED_YELLOW(getMs() >> 9 & 1);
-
         boardService();
         
     }
