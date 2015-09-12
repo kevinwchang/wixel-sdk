@@ -30,4 +30,9 @@
 
 #define CMDMAP_BIT(n) (1 << ((n) & 0x7))
 
+#define BUSTYPE_PARALLEL  0x01
+#define BUSTYPE_LPC       0x02
+#define BUSTYPE_FWH       0x04
+#define BUSTYPE_SPI       0x08
+
 #endif
